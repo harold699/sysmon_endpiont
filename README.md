@@ -246,7 +246,7 @@ Get-WinEvent -Path <Path to Log> -FilterXPath '*/System/EventID=3 and */EventDat
 <img width="1498" height="342" alt="image" src="https://github.com/user-attachments/assets/2320ee35-b046-42a0-a457-e9b45afe4633" />
 
 
-Filtrage des événements
+##Filtrage des événements
 PS C:\Users\THM-Analyst> Get-WinEvent -Path C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_Metasploit.evtx -FilterXPath '*/System/EventID=3 and */EventData/Data[@Name="DestinationPort"] and */EventData/Data=4444'
 
 
@@ -262,11 +262,602 @@ Aucune réponse n’est nécessaire
 Bonne réponse
 Combien y a-t-il d’événements d’ID d’événement 3 dans C :\Users\THM-Analyst\Desktop\Scenarios\Practice\Filtering.evtx ?
 
-__,___
+73,591
+
+<img width="1255" height="105" alt="image" src="https://github.com/user-attachments/assets/240d9b81-249c-4690-8029-cc106bc424cc" />
+
 
 Envoyer
 Quelle est l’heure UTC du premier événement réseau dans le même fichier journal ? Notez que l’heure UTC n’est affichée que dans l’onglet « Détails ».
 
-__________ __:__:__.___
+2021-01-06 01:35:50.464
 
 Envoyer
+<img width="1257" height="99" alt="image" src="https://github.com/user-attachments/assets/c695b000-d051-4f33-bfe7-b6c8e001c16b" />
+
+#Tâche 5 : Chasse au Metasploit
+
+Metasploit est un framework d’exploitation couramment utilisé pour les tests d’intrusion et les opérations d’équipe rouge. Metasploit peut être utilisé pour exécuter facilement des exploits sur une machine et se reconnecter à un shell meterpreter. Nous allons chasser la coquille meterpreter elle-même et les fonctionnalités qu’elle utilise. Pour commencer la chasse, nous allons rechercher des connexions réseau provenant de ports suspects tels que et . Par défaut, Metasploit utilise le port 4444. S’il existe une connexion à une adresse IP connue ou inconnue, elle doit être examinée. Pour démarrer une enquête, vous pouvez consulter les captures de paquets à partir de la date du journal pour commencer à rechercher des informations supplémentaires sur l’adversaire. Nous pouvons également rechercher des processus suspects créés. Cette méthode de chasse peut être appliquée à d’autres balises RAT et C2.44445555
+
+Pour plus d’informations sur cette technique et les outils utilisés, consultez le logiciel MITRE ATT&CK.
+
+Pour plus d’informations sur la façon dont les logiciels malveillants et les charges utiles interagissent avec le réseau, consultez la feuille de calcul des ports courants des logiciels malveillants. Ce point sera abordé plus en détail dans la tâche Chasse aux logiciels malveillants.
+
+Vous pouvez télécharger les journaux d’événements utilisés dans cette salle à partir de cette tâche ou les ouvrir dans le dossier Practice de l’ordinateur fourni.
+
+Connexions au réseau de chasse
+
+Nous allons d’abord examiner une configuration modifiée d’Ion-Security pour détecter la création de nouvelles connexions réseau. L’extrait de code ci-dessous utilisera l’ID d’événement 3 avec le port de destination pour identifier les connexions actives, en particulier les connexions sur le port et . 44445555
+
+<RuleGroup name="" groupRelation="or">
+	<NetworkConnect onmatch="include">
+		<DestinationPort condition="is">4444</DestinationPort>
+		<DestinationPort condition="is">5555</DestinationPort>
+	</NetworkConnect>
+</RuleGroup>
+<img width="1275" height="191" alt="image" src="https://github.com/user-attachments/assets/9be2864a-8265-4ad6-aa76-d6dcb454a95a" />
+
+
+Ouvrez-le dans l’Observateur d’événements pour afficher une charge utile Metasploit de base déposée sur la machine.C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_Metasploit.evtx
+
+Screenshot of Windows event log viewer showing details of a suspicious tcp log
+<img width="537" height="485" alt="image" src="https://github.com/user-attachments/assets/ecba9a6b-33e5-44fc-916c-6596a39401fc" />
+
+Une fois que nous avons identifié l’événement, il peut nous donner des informations importantes que nous pouvons utiliser pour une enquête plus approfondie, comme le et .ProcessIDImage
+
+Chasse aux ports ouverts avec PowerShell
+
+Pour rechercher des ports ouverts avec PowerShell, nous allons utiliser le module PowerShell avec des requêtes. Nous pouvons utiliser les mêmes requêtes XPath que celles que nous avons utilisées dans la règle pour filtrer les événements à partir de . La ligne de commande est généralement utilisée sur l’interface graphique de l’Observateur d’événements, car elle peut permettre un contrôle et un filtrage plus précis que l’interface graphique n’offre pas. Pour plus d’informations sur l’utilisation de XPath et de la ligne de commande pour l’affichage des événements, consultez la salle du journal des événements Windows de Heavenraiza.Get-WinEventXPathNetworkConnectDestinationPort
+
+Get-WinEvent -Path <Path to Log> -FilterXPath '*/System/EventID=3 and */EventData/Data[@Name="DestinationPort"] and */EventData/Data=4444'
+
+##Chasse Metasploit
+PS C:\Users\THM-Analyst> Get-WinEvent -Path C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_Metasploit.evtx -FilterXPath '*/System/EventID=3 and */EventData/Data[@Name="DestinationPort"] and */EventData/Data=4444'
+
+
+   ProviderName: Microsoft-Windows-Sysmon
+
+TimeCreated                     Id LevelDisplayName Message
+-----------                     -- ---------------- -------
+1/5/2021 2:21:32 AM              3 Information      Network connection detected:...
+<img width="1254" height="318" alt="image" src="https://github.com/user-attachments/assets/1eca980a-1ba0-48c2-b3d8-54233e442bcd" />
+
+Nous pouvons décomposer cette commande par ses filtres pour voir exactement ce qu’elle fait. Il s’agit d’abord d’un filtrage par l’ID d’événement 3 qui est l’ID de connexion réseau. Il filtre ensuite par le nom de données dans ce cas DestinationPort ainsi que par le port spécifique que nous voulons filtrer. Nous pouvons ajuster cette syntaxe en même temps que nos événements pour obtenir exactement les données que nous voulons en retour.
+
+Répondez aux questions ci-dessous
+Lisez ce qui précède et entraînez-vous à chasser Metasploit avec le fichier d’événements fourni.
+Aucune réponse n’est nécessaire
+
+Bonne réponse
+
+##Tâche 6 Détection de Mimikatz
+
+Télécharger les fichiers de tâches
+Détection de Mimikatz Vue d’ensemble
+
+Mimikatz est bien connu et couramment utilisé pour vider les informations d’identification de la mémoire ainsi que d’autres activités de post-exploitation Windows. Mimikatz est principalement connu pour le dumping de LSASS. Nous pouvons rechercher le fichier créé, l’exécution du fichier à partir d’un processus élevé, la création d’un thread distant et les processus créés par Mimikatz. L’antivirus détecte généralement Mimikatz car la signature est très connue, mais il est toujours possible pour les acteurs de la menace d’obscurcir ou d’utiliser des droppers pour obtenir le fichier sur l’appareil. Pour cette chasse, nous utiliserons un fichier de configuration personnalisé pour minimiser le bruit du réseau et nous concentrer sur la chasse.
+
+Pour plus d’informations sur cette technique et les logiciels utilisés, consultez MITRE ATTACK T1055 et S0002.
+
+Vous pouvez télécharger les journaux d’événements utilisés dans cette salle à partir de cette tâche ou les ouvrir dans le dossier Practice de l’ordinateur fourni.
+
+##Détection de la création de fichiers
+
+La première méthode de chasse à Mimikatz consiste simplement à rechercher des fichiers créés avec le nom Mimikatz. Il s’agit d’une technique simple, mais qui peut vous permettre de trouver tout ce qui aurait pu contourner l’AV. La plupart du temps, lorsqu’il s’agit d’une menace avancée, vous aurez besoin de techniques de chasse plus avancées, comme la recherche du comportement LSASS, mais cette technique peut toujours être utile.
+
+Il s’agit d’un moyen très simple de détecter l’activité de Mimikatz qui a contourné l’antivirus ou d’autres mesures de détection. Mais la plupart du temps, il est préférable d’utiliser d’autres techniques comme la chasse au comportement spécifique au LSASS. Vous trouverez ci-dessous un extrait d’une configuration pour aider à la chasse à Mimikatz.
+
+<RuleGroup name="" groupRelation="or">
+	<FileCreate onmatch="include">
+		<TargetFileName condition="contains">mimikatz</TargetFileName>
+	</FileCreate>
+</RuleGroup>
+
+
+Comme cette méthode ne sera pas couramment utilisée pour rechercher des anomalies, nous n’examinerons pas les journaux d’événements pour cette technique spécifique.
+
+##Chasse au comportement anormal du LSASS
+
+Nous pouvons utiliser l’ID d’événement ProcessAccess pour rechercher un comportement LSASS anormal. Cet événement, ainsi que le LSASS, montreraient un abus potentiel du LSASS, qui renvoie généralement à Mimikatz, un autre type d’outil de dumping d’identifiants. Regardez ci-dessous pour plus de détails sur la chasse avec ces techniques.
+
+Si LSASS est accédé par un processus autre que svchost.exe il doit être considéré comme un comportement suspect et doit faire l’objet d’une enquête plus approfondie, pour faciliter la recherche d’événements suspects, vous pouvez utiliser un filtre pour rechercher uniquement des processus autres que svchost.exe. Sysmon nous fournira plus de détails pour nous aider à mener l’enquête, tels que le chemin d’accès au fichier d’où provient le processus. Pour faciliter les détections, nous utiliserons un fichier de configuration personnalisé. Vous trouverez ci-dessous un extrait de la configuration qui vous aidera dans la chasse.
+
+<RuleGroup name="" groupRelation="or">
+	<ProcessAccess onmatch="include">
+	       <TargetImage condition="image">lsass.exe</TargetImage>
+	</ProcessAccess>
+</RuleGroup>
+<img width="538" height="147" alt="image" src="https://github.com/user-attachments/assets/fce35541-39fa-4da0-8c8c-2745b9a01dae" />
+
+Ouvrez dans l’Observateur d’événements pour afficher une attaque utilisant une version obfusquée de Mimikatz pour vider les informations d’identification de la mémoire.C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_LSASS.evtx
+
+screenshot of Windows event log viewer showing details of a mimikatz log
+<img width="961" height="429" alt="image" src="https://github.com/user-attachments/assets/5882b61e-9984-4923-a3e1-28c340c4cd72" />
+
+Nous voyons l’événement auquel le processus de Mimikatz a eu accès, mais nous voyons aussi beaucoup d’événements svchost.exe ? Nous pouvons modifier notre configuration pour exclure les événements dont l’événement provient de svhost.exe. Vous trouverez ci-dessous une règle de configuration modifiée pour réduire le bruit présent dans les journaux d’événements.SourceImage
+
+<RuleGroup name="" groupRelation="or">
+	<ProcessAccess onmatch="exclude">
+		<SourceImage condition="image">svchost.exe</SourceImage>
+	</ProcessAccess>
+	<ProcessAccess onmatch="include">
+		<TargetImage condition="image">lsass.exe</TargetImage>
+	</ProcessAccess>
+</RuleGroup>
+ <img width="522" height="235" alt="image" src="https://github.com/user-attachments/assets/53e03d20-e0e9-4efd-8451-dfe80ed7bc2a" />
+
+
+En modifiant le fichier de configuration pour inclure cette exception, nous avons considérablement réduit nos événements et pouvons nous concentrer uniquement sur les anomalies. Cette technique peut être utilisée dans Sysmon et les événements pour réduire le « bruit » dans les journaux.
+
+##Détection du comportement LSASS avec PowerShell
+
+Pour détecter un comportement LSASS anormal avec PowerShell, nous utiliserons à nouveau le module PowerShell avec des requêtes. Nous pouvons utiliser les mêmes requêtes XPath que celles utilisées dans la règle pour filtrer les autres processus à partir de . Si nous l’utilisons avec un fichier de configuration bien construit avec une règle précise, il fera une grande partie du travail pour nous et nous n’aurons besoin de filtrer qu’une petite quantité.Get-WinEventXPathTargetImage
+
+Get-WinEvent -Path <Path to Log> -FilterXPath '*/System/EventID=10 and */EventData/Data[@Name="TargetImage"] and */EventData/Data="C:\Windows\system32\lsass.exe"'
+
+##Chasse à Mimikatz
+
+PS C:\Users\THM-Analyst> Get-WinEvent -Path C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_Mimikatz.evtx -FilterXPath '*/System/EventID=10 and */EventData/Data[@Name="TargetImage"] and */EventData/Data="C:\Windows\system32\lsass.exe"'
+
+   ProviderName: Microsoft-Windows-Sysmon
+
+TimeCreated                     Id LevelDisplayName Message
+-----------                     -- ---------------- -------
+1/5/2021 3:22:52 AM             10 Information      Process accessed:...
+<img width="1257" height="362" alt="image" src="https://github.com/user-attachments/assets/ea1cac37-4967-4066-bb75-bb969715ac7e" />
+
+Répondez aux questions ci-dessous
+Lisez ce qui précède et entraînez-vous à détecter Mimikatz avec l’evtx fourni.
+
+Aucune réponse n’est nécessaire
+
+Bonne réponse
+## Tâche 7 Chasse aux logiciels malveillants
+
+Télécharger les fichiers de tâches
+##Présentation de la chasse aux logiciels malveillants
+
+Les logiciels malveillants se présentent sous de nombreuses formes et variantes avec des objectifs finaux différents. Les deux types de logiciels malveillants sur lesquels nous nous concentrerons sont les RAT et les portes dérobées. Les RAT ou chevaux de Troie d’accès à distance sont utilisés de la même manière que n’importe quelle autre charge utile pour obtenir un accès à distance à une machine. Les RAT sont généralement associés à d’autres techniques d’évasion antivirus et de détection qui les différencient des autres charges utiles telles que MSFVenom. Un RAT utilise généralement également un modèle client-serveur et est livré avec une interface pour faciliter l’administration des utilisateurs. Des exemples de TAR sont et . Pour aider à détecter et à chasser les logiciels malveillants, nous devrons d’abord identifier les logiciels malveillants que nous voulons chasser ou détecter et identifier les moyens de modifier les fichiers de configuration, c’est ce qu’on appelle la chasse basée sur des hypothèses. Il existe bien sûr une pléthore d’autres façons de détecter et d’enregistrer les logiciels malveillants, mais nous ne couvrirons que la méthode de base de détection des ports de connexion à dos ouvert. XeexeQuasar
+
+Pour plus d’informations sur cette technique et des exemples de logiciels malveillants, consultez le logiciel MITRE ATT&CK.
+
+Vous pouvez télécharger les journaux d’événements utilisés dans cette salle à partir de cette tâche ou les ouvrir dans le dossier Practice de l’ordinateur fourni.
+
+##Chasse aux rats et serveurs C2
+
+La première technique que nous utiliserons pour chasser les logiciels malveillants est un processus similaire à la chasse au Metasploit. Nous pouvons parcourir et créer un fichier de configuration pour rechercher et détecter les ports suspects ouverts sur le point de terminaison. En utilisant des ports suspects connus à inclure dans nos journaux, nous pouvons ajouter à notre méthodologie de chasse dans laquelle nous pouvons utiliser les journaux pour identifier les adversaires sur notre réseau, puis utiliser des captures de paquets ou d’autres stratégies de détection pour poursuivre l’enquête. L’extrait de code ci-dessous provient du fichier de configuration Ion-Storm qui alertera lorsque des ports spécifiques aiment et excluent des connexions réseau courantes comme OneDrive, en excluant les événements, nous voyons toujours tout ce que nous voulons sans rien manquer et réduire le bruit. 10341604
+
+Lorsque vous utilisez des fichiers de configuration dans un environnement de production, vous devez être prudent et comprendre exactement ce qui se passe dans le fichier de configuration, par exemple le fichier de configuration Ion-Storm exclut le port 53 en tant qu’événement. Les attaquants et les adversaires ont commencé à utiliser le port 53 dans le cadre de leurs logiciels malveillants/charges utiles, qui ne seraient pas détectés si vous utilisiez aveuglément ce fichier de configuration tel quel.
+
+Pour plus d’informations sur les ports sur lesquels ce fichier de configuration est alerté, consultez cette feuille de calcul.
+
+<RuleGroup name="" groupRelation="or">
+	<NetworkConnect onmatch="include">
+		<DestinationPort condition="is">1034</DestinationPort>
+		<DestinationPort condition="is">1604</DestinationPort>
+	</NetworkConnect>
+	<NetworkConnect onmatch="exclude">
+		<Image condition="image">OneDrive.exe</Image>
+	</NetworkConnect>
+</RuleGroup>
+<img width="489" height="258" alt="image" src="https://github.com/user-attachments/assets/396a8c69-c339-4aa2-958e-994db48f13bf" />
+
+
+Ouvrez dans l’Observateur d’événements pour voir un rat en direct déposé sur le serveur.C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_Rats.evtx
+
+screenshot of Windows event log viewer showing details of a RAT log
+<img width="551" height="512" alt="image" src="https://github.com/user-attachments/assets/bce1704c-e8ab-4c97-a34f-45c97ca7d85a" />
+
+Dans l’exemple ci-dessus, nous détectons un RAT personnalisé qui fonctionne sur le port 8080. C’est un exemple parfait de la raison pour laquelle vous devez être prudent lorsque vous excluez des événements afin de ne pas manquer une activité malveillante potentielle.
+
+#Recherche de ports de back-connect communs avec PowerShell
+
+Tout comme les sections précédentes, lors de l’utilisation de PowerShell, nous utiliserons à nouveau le module PowerShell avec des requêtes pour filtrer nos événements et obtenir un contrôle granulaire sur nos journaux. Nous devrons filtrer sur l’ID de l’événement et l’attribut data. Si vous utilisez un bon fichier de configuration avec un ensemble fiable de règles, il fera la majorité du travail et le filtrage selon ce que vous voulez devrait être facile.Get-WinEventXPathNetworkConnectDestinationPort
+
+Get-WinEvent -Path <Path to Log> -FilterXPath '*/System/EventID=3 and */EventData/Data[@Name="DestinationPort"] and */EventData/Data=<Port>'
+<img width="1242" height="411" alt="image" src="https://github.com/user-attachments/assets/9995e981-d5a6-43a6-a0c1-f38b7bd7562b" />
+
+Connexions de chasse
+
+PS C:\Users\THM-Analyst> Get-WinEvent -Path C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_Rats.evtx -FilterXPath '*/System/EventID=3 and */EventData/Data[@Name="DestinationPort"] and */EventData/Data=8080'
+
+   ProviderName: Microsoft-Windows-Sysmon
+
+TimeCreated                     Id LevelDisplayName Message
+-----------                     -- ---------------- -------
+1/5/2021 4:44:35 AM              3 Information      Network connection detected:...
+1/5/2021 4:44:31 AM              3 Information      Network connection detected:...
+1/5/2021 4:44:27 AM              3 Information      Network connection detected:...
+1/5/2021 4:44:24 AM              3 Information      Network connection detected:...
+1/5/2021 4:44:20 AM              3 Information      Network connection detected:...
+Répondez aux questions ci-dessous
+Lisez ce qui précède et entraînez-vous à chasser les rats et les serveurs C2 avec des ports de connexion arrière.
+
+---
+## Tâche 8 Chasse persistante
+
+Télécharger les fichiers de tâches
+#Persistence Overview
+
+Persistence is used by attackers to maintain access to a machine once it is compromised. There is a multitude of ways for an attacker to gain persistence on a machine. We will be focusing on registry modification as well as startup scripts. We can hunt persistence with Sysmon by looking for File Creation events as well as Registry Modification events. The SwiftOnSecurity configuration file does a good job of specifically targeting persistence and techniques used. You can also filter by the Rule Names in order to get past the network noise and focus on anomalies within the event logs. 
+
+Vous pouvez télécharger les journaux d’événements utilisés dans cette salle à partir de cette tâche ou les ouvrir dans le dossier Practice de l’ordinateur fourni.
+
+#Hunting Startup Persistence
+
+We will first be looking at the SwiftOnSecurity detections for a file being placed in the  or directories. Below is a snippet of the config that will aid in event tracing for this technique. For more information about this technique check out MITRE ATT&CK T1547.\Startup\\Start Menu
+
+<RuleGroup name="" groupRelation="or">
+	<FileCreate onmatch="include">
+		<TargetFilename name="T1023" condition="contains">\Start Menu</TargetFilename>
+		<TargetFilename name="T1165" condition="contains">\Startup\</TargetFilename>
+	</FileCreate>
+</RuleGroup>
+<img width="670" height="187" alt="image" src="https://github.com/user-attachments/assets/87906711-99d4-408e-9d1d-7a8f082199c7" />
+
+
+Open   in Event Viewer to view a live attack on the machine that involves persistence by adding a malicious EXE into the Startup folder.C:\Users\THM-Analyst\Desktop\Scenarios\Practice\T1023.evtx
+<img width="930" height="260" alt="image" src="https://github.com/user-attachments/assets/a936e53a-fde5-4143-9a90-4f02effdc39d" />
+
+
+
+When looking at the Event Viewer we see that persist.exe was placed in the Startup folder. Threat Actors will almost never make it this obvious but any changes to the Start Menu should be investigated. You can adjust the configuration file to be more granular and create alerts past just the File Created tag. We can also filter by the Rule Name T1023
+
+
+<img width="1183" height="579" alt="image" src="https://github.com/user-attachments/assets/bd9ef314-da9e-41da-a574-548b9e6a1d9d" />
+
+
+
+Once you have identified that a suspicious binary or application has been placed in a startup location you can begin an investigation on the directory.
+
+#Hunting Registry Key Persistence
+
+We will again be looking at another SwiftOnSecurity detection this time for a registry modification that adjusts that places a script inside and other registry locations. For more information about this technique check out MITRE ATT&CK T1112.CurrentVersion\Windows\Run
+
+<RuleGroup name="" groupRelation="or">
+	<RegistryEvent onmatch="include">
+		<TargetObject name="T1060,RunKey" condition="contains">CurrentVersion\Run</TargetObject>
+		<TargetObject name="T1484" condition="contains">Group Policy\Scripts</TargetObject>
+		<TargetObject name="T1060" condition="contains">CurrentVersion\Windows\Run</TargetObject>
+	</RegistryEvent>
+</RuleGroup>
+<img width="741" height="208" alt="image" src="https://github.com/user-attachments/assets/2af4aa92-e78b-47e9-bfc4-22a803cf556c" />
+
+
+Open in Event Viewer to view an attack where the registry was modified to gain persistence.C:\Users\THM-Analyst\Desktop\Scenarios\Practice\T1060.evtx
+
+<img width="706" height="266" alt="image" src="https://github.com/user-attachments/assets/1a8531af-6e42-4b4b-8af8-367f8cabcf0e" />
+
+
+When looking at the event logs we see that the registry was modified and malicious.exe was added to  We also see that the exe can be found at HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\Persistence%windir%\System32\malicious.exe
+
+Just like the startup technique, we can filter by the to make finding the anomaly easier. RuleName T1060
+
+If we wanted to investigate this anomaly we would need to look at the registry as well as the file location itself. Below is the registry area where the malicious registry key was placed.
+
+
+<img width="957" height="187" alt="image" src="https://github.com/user-attachments/assets/c54c9961-a98d-4e62-9598-56fe9a0270f9" />
+
+Répondez aux questions ci-dessous
+Read the above and practice hunting persistence techniques.
+Aucune réponse n’est nécessaire
+
+Bonne réponse
+---
+
+##Tâche 9 Détection des techniques d’évasion
+
+Télécharger les fichiers de tâches
+##Aperçu des techniques d’évasion
+
+Il existe un certain nombre de techniques d’évasion utilisées par les auteurs de logiciels malveillants pour échapper à la fois aux antivirus et aux détections. Quelques exemples de techniques d’évasion sont les flux de données alternatifs, les injections, le masquage, l’emballage/compression, la recompilation, l’obfuscation, les techniques anti-retournement. Dans cette tâche, nous nous concentrerons sur les flux de données alternatifs et les injections. Les flux de données alternatifs sont utilisés par les logiciels malveillants pour cacher leurs fichiers à l’inspection normale en enregistrant le fichier dans un flux différent de . Sysmon est livré avec un ID d’événement pour détecter les flux nouvellement créés et consultés, ce qui nous permet de détecter et de chasser rapidement les logiciels malveillants qui utilisent ADS. Il en existe de nombreux types de techniques d’injection : détournement de fil, injection PE, injection DLL, etc. Dans cette salle, nous nous concentrerons sur l’injection de DLL et les DLL de porte dérobée. Pour ce faire, il suffit de prendre une DLL déjà utilisée par une application et d’écraser ou d’inclure votre code malveillant dans la DLL.$DATA
+
+Pour plus d’informations sur cette technique, consultez les modèles MITRE ATT&CK T1564 et T1055.
+
+Vous pouvez télécharger les journaux d’événements utilisés dans cette salle à partir de cette tâche ou les ouvrir dans le dossier Practice de l’ordinateur fourni.
+
+#Chasse aux flux de données alternatifs
+
+La première technique que nous allons examiner consiste à masquer des fichiers à l’aide de flux de données alternatifs à l’aide de l’ID d’événement 15. L’ID d’événement 15 hache et consigne tous les flux NTFS inclus dans le fichier de configuration Sysmon. Cela nous permettra de chasser les logiciels malveillants qui échappent aux détections à l’aide d’ADS. Pour faciliter la chasse à l’ADS, nous utiliserons le fichier de configuration SwiftOnSecurity Sysmon. L’extrait de code ci-dessous recherchera les fichiers dans le dossier et ainsi que dans l’extension and.TempDownloads.hta.bat
+
+<RuleGroup name="" groupRelation="or">
+<FileCreateStreamHash onmatch="include">
+<TargetFilename condition="contains">Downloads</TargetFilename>
+<TargetFilename condition="contains">Temp\7z</TargetFilename>
+<TargetFilename condition="ends with">.hta</TargetFilename>
+<TargetFilename condition="ends with">.bat</TargetFilename>
+</FileCreateStreamHash>
+</RuleGroup>
+<img width="510" height="233" alt="image" src="https://github.com/user-attachments/assets/d053e701-f540-4cbe-b44c-1300451b76ff" />
+
+Ouvrir dans l’Observateur d’événements pour afficher les fichiers masqués à l’aide d’un autre flux de données.C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Hunting_ADS.evtx
+
+
+
+ <img width="658" height="300" alt="image" src="https://github.com/user-attachments/assets/d18dbdcf-8a2d-4997-bcfd-2cbcfce9d781" />
+
+
+Liste des flux de données
+C:\\Users\\THM-Threat>dir /r
+ Volume in drive C has no label.
+ Volume Serial Number is C0C4-7EC1
+
+ Directory of C:\\Users\\THM-Threat
+
+10/23/2022  02:56 AM    <DIR>          .
+10/23/2022  02:56 AM    <DIR>          ..
+01/02/2021  12:43 AM    <DIR>          3D Objects
+01/02/2021  12:43 AM    <DIR>          Contacts
+01/05/2021  11:53 PM    <DIR>          Desktop
+01/02/2021  12:43 AM    <DIR>          Documents
+01/10/2021  12:11 AM    <DIR>          Downloads
+01/02/2021  12:43 AM    <DIR>          Favorites
+01/02/2021  12:43 AM    <DIR>          Links
+01/02/2021  12:43 AM    <DIR>          Music
+10/23/2022  02:56 AM                 0 not_malicious.txt
+                                    13 not_malicious.txt:malicious.txt:$DATA 
+Comme vous pouvez le voir, l’événement nous montrera l’emplacement du nom du fichier ainsi que le contenu du fichier, ce qui sera utile si une enquête est nécessaire.
+
+#Détection des threads distants
+
+Les adversaires utilisent également couramment des threads distants pour échapper aux détections en combinaison avec d’autres techniques. Les threads distants sont créés à l’aide de l’API Windows et sont accessibles à l’aide de et . Ceci est utilisé dans plusieurs techniques d’évasion, notamment l’injection de DLL, le détournement de fil et l’évidement de processus. Nous utiliserons l’ID d’événement Sysmon 8 du fichier de configuration SwiftOnSecurity. L’extrait de code ci-dessous de la règle exclura les threads distants courants sans inclure d’attributs spécifiques, ce qui permet d’obtenir une règle d’événement plus ouverte et plus précise. CreateRemoteThreadOpenThreadResumeThread
+
+<RuleGroup name="" groupRelation="or">
+<CreateRemoteThread onmatch="exclude">
+<SourceImage condition="is">C:\Windows\system32\svchost.exe</SourceImage>
+<TargetImage condition="is">C:\Program Files (x86)\Google\Chrome\Application\chrome.exe</TargetImage>
+</CreateRemoteThread>
+</RuleGroup>
+<img width="800" height="187" alt="image" src="https://github.com/user-attachments/assets/7fe385c7-60c0-4d6c-8072-bf271416f447" />
+
+
+Ouvrez dans l’Observateur d’événements pour observer une attaque Process Hollowing qui abuse du processus notepad.exe. C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Detecting_RemoteThreads.evtx
+
+screenshot of Windows event log viewer showing details of a powershell session executed from notepad
+<img width="655" height="369" alt="image" src="https://github.com/user-attachments/assets/0c40e8c3-3344-40dc-a4ca-4bf1797a61eb" />
+
+Comme vous pouvez le voir dans l’image powershell ci-dessus.exe crée un fil de discussion distant et accède à notepad.exe. Il s’agit évidemment d’un PoC et pourrait en théorie exécuter n’importe quel autre type d’exécutable ou de DLL. La technique spécifique utilisée dans cet exemple s’appelle l’injection PE réfléchissante.
+
+Détection des techniques d’évasion avec PowerShell
+
+Nous avons déjà passé en revue la majorité de la syntaxe requise pour utiliser PowerShell avec des événements. Comme pour les tâches précédentes, nous utiliserons avec le pour filtrer et rechercher des fichiers qui utilisent un autre flux de données ou créent un fil de discussion distant. Dans les deux cas, nous n’aurons qu’à filtrer par le car la règle utilisée dans le fichier de configuration fait déjà la majorité du gros du travail. Get-WinEventXPathEventID
+
+# Détection de la création de threads distants
+
+Syntaxe: Get-WinEvent -Path <Path to Log> -FilterXPath '*/System/EventID=8'
+
+Détection des threads distants
+
+PS C:\Users\THM-Analyst> Get-WinEvent -Path C:\Users\THM-Analyst\Desktop\Scenarios\Practice\Detecting_RemoteThreads.evtx -FilterXPath '*/System/EventID=8'
+**<img width="1254" height="422" alt="image" src="https://github.com/user-attachments/assets/281a4113-81ee-4314-abb0-358eb4815b6f" />**
+   ProviderName: Microsoft-Windows-Sysmon
+
+TimeCreated                     Id LevelDisplayName Message
+-----------                     -- ---------------- -------
+7/3/2019 8:39:30 PM              8 Information      CreateRemoteThread detected:...
+7/3/2019 8:39:30 PM              8 Information      CreateRemoteThread detected:...
+7/3/2019 8:39:30 PM              8 Information      CreateRemoteThread detected:...
+7/3/2019 8:39:30 PM              8 Information      CreateRemoteThread detected:...
+7/3/2019 8:39:30 PM              8 Information      CreateRemoteThread detected:...
+Répondez aux questions ci-dessous
+Lisez ce qui précède et pratiquez les techniques de détection de l’évasion
+Aucune réponse n’est nécessaire
+
+Bonne réponse
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# 🕵️‍♂️ Tâche 10 — Investigations pratiques
+
+Les fichiers d’événements utilisés dans cette tâche proviennent des référentiels Github EVTX-ATTACK-SAMPLES et SysmonResources.
+
+Vous pouvez télécharger les journaux d’événements utilisés dans cette salle à partir de cette tâche ou les ouvrir dans le dossier Investigations sur l’ordinateur fourni.
+
+Enquête 1 - UGH, BILL THAT’S WRONG USB !
+
+Dans le cadre de cette enquête, votre équipe a reçu des rapports indiquant qu’un fichier malveillant a été déposé sur un hôte par une clé USB malveillante. Ils ont extrait les journaux suspects et vous ont chargé de mener l’enquête pour cela.
+
+Les journaux se trouvent dans .C:\Users\THM-Analyst\Desktop\Scenarios\Investigations\Investigation-1.evtx
+
+Enquête 2 - Ce n’est pas un fichier HTML ?
+
+Un autre fichier suspect est apparu dans vos journaux et a réussi à exécuter du code se masquant sous la forme d’un fichier HTML, échappant ainsi à vos détections antivirus. Ouvrez les journaux et examinez le fichier suspect.
+
+Les journaux se trouvent dans .C:\Users\THM-Analyst\Desktop\Scenarios\Investigations\Investigation-2.evtx
+
+Enquête 3.1 - 3.2 - Où est le videur quand on a besoin de lui
+
+Votre équipe vous a informé que l’adversaire a réussi à configurer la persistance sur vos points de terminaison alors qu’il continue de se déplacer sur votre réseau. Découvrez comment l’adversaire a réussi à obtenir de la persistance à l’aide des journaux fournis.
+
+Les journaux se trouvent dans C:\Users\THM-Analyst\Desktop\Scenarios\Investigations\Investigation-3.1.evtx
+
+et.C:\Users\THM-Analyst\Desktop\Scenarios\Investigations\Investigation-3.2.evtx
+
+Enquête 4 - Maman, regarde ! J’ai créé un botnet !
+
+Au fur et à mesure que l’adversaire a pris pied sur votre réseau, il a été porté à votre attention qu’il aurait peut-être été en mesure d’établir des communications C2 sur certains des terminaux. Collectez les journaux et poursuivez votre enquête.
+
+Les journaux se trouvent dans .C:\Users\THM-Analyst\Desktop\Scenarios\Investigations\Investigation-4.evtx
+
+## 🔍 Enquête 1 — UGH, BILL THAT’S WRONG USB !
+
+**Fichier :** `Investigation-1.evtx`
+Pour identifier la clé de registre, il faut examiner l’événement 13 – “Registry value set”, puis observer le champ TargetObject, qui indique précisément la clé modifiée ou créée.
+**Question 1 :** Quelle est la clé de registre complète du périphérique USB qui appelle svchost.exe ?
+**Réponse :**
+`HKLM\System\CurrentControlSet\Enum\WpdBusEnumRoot\UMB\2&37c186b&0&STORAGE#VOLUME#_??_USBSTOR#DISK&VEN_SANDISK&PROD_U3_CRUZER_MICRO&REV_8.01#4054910EF19005B3&0#\FriendlyName`
+<img width="1031" height="145" alt="image" src="https://github.com/user-attachments/assets/c9bd8369-d603-42a4-98b8-ae4e93d0a450" />
+
+
+**Question 2 :** Quel est le nom de l’appareil lorsqu’il est appelé par RawAccessRead ?
+
+Événement 9 — Object create
+Cet événement signale la création d’un nouvel objet de registre dans Windows.
+Autrement dit, il indique qu’une nouvelle clé de registre a été créée dans le système.
+C’est utile pour retracer l’installation d’un périphérique ou d’un programme, car cela montre le moment précis où une clé est apparue dans le registre.
+
+**Réponse :**
+`\Device\HarddiskVolume3`
+<img width="648" height="366" alt="image" src="https://github.com/user-attachments/assets/a645f9e5-8fdb-4208-95a5-a7fb5a30987a" />
+
+**Question 3 :** Quel est le premier exe exécuté par le processus ?
+Pour identifier le premier exécutable lancé par un processus, il faut examiner les événements de type “Process creation” (ID 1) dans les journaux Windows.
+Le champ ParentCommandLine indique le chemin complet de l’exécutable (.exe) qui a été exécuté.
+**Réponse :**
+`rundll32.exe`
+<img width="984" height="527" alt="image" src="https://github.com/user-attachments/assets/13ba18f8-2e12-42b6-af6c-c2649c651d22" />
+
+
+---
+
+## 💻 Enquête 2 — Ce n’est pas un fichier HTML ?
+
+**Fichier :** `Investigation-2.evtx`
+
+**Question 1 :** Quel est le chemin complet de la charge utile ?
+Pour trouver le chemin complet de la charge utile, il faut examiner les événements de type “CommandLine” (ID 1) ou 
+Le champ contient le chemin complet du fichier exécuté ou déposé sur le système.
+Ces champs sont essentiels car ils permettent d’identifier l’emplacement exact du fichier malveillant (la charge utile), ce qui aide à retracer son origine et à évaluer son impact sur l’hôte.
+**Réponse :**
+`C:\Users\IEUser\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\S97WTYG7\update.hta`
+<img width="973" height="430" alt="image" src="https://github.com/user-attachments/assets/80860918-1178-4eae-909c-858580b56309" />
+
+
+**Question 2 :** Quel est le chemin d’accès complet du fichier que la charge utile s’est masquée ?
+Pour trouver le chemin complet de la charge utile, il faut examiner les événements de type “  ParentCommandLine ” (ID 1) 
+**Réponse :**
+`C:\Users\IEUser\Downloads\update.html`
+<img width="912" height="480" alt="image" src="https://github.com/user-attachments/assets/a2c06244-5d55-45ec-971e-b41a6d193eeb" />
+
+**Question 3 :** Quel binaire signé a exécuté la charge utile ?
+Pour trouver le chemin complet de la charge utile, il faut examiner les événements de type “ Image” (ID 3) 
+L’événement 3 (Network connection) est utilisé pour surveiller les connexions réseau établies par les processus.
+Il enregistre les détails sur les communications sortantes et entrantes, notamment :
+
+le processus à l’origine de la connexion (Image),
+
+l’adresse IP distante (DestinationIp),
+
+le port distant (DestinationPort),
+
+et le protocole utilisé.
+**Réponse :**
+`C:\Windows\System32\mshta.exe`
+
+**Question 4 :** Quelle est l’adresse IP de l’adversaire ?
+**Réponse :**
+`10.0.2.18`
+
+**Question 5 :** Quel port de connexion arrière est utilisé ?
+**Réponse :**
+`4443`
+
+<img width="1009" height="580" alt="image" src="https://github.com/user-attachments/assets/68bd8396-ef86-4a0b-9451-7abdd77fece0" />
+
+
+---
+
+## 🧩 Enquête 3.1 — Où est le videur quand on a besoin de lui
+
+**Fichier :** `Investigation-3.1.evtx`
+
+L’événement 3 (Network connection)
+
+**Question 1 :** Quelle est l’adresse IP de l’adversaire présumé ?
+**Réponse :**
+`172.30.1.253`
+
+**Question 2 :** Quel est le nom d’hôte du point de terminaison affecté ?
+**Réponse :**
+`DESKTOP-O153T4R`
+
+**Question 3 :** Quel est le nom d’hôte du serveur C2 ?
+**Réponse :**
+`empirec2`
+<img width="986" height="576" alt="image" src="https://github.com/user-attachments/assets/a0ccb9ae-97cd-4165-b673-a05f67f1cab2" />
+
+**Question 4 :** Où dans le registre la charge utile était-elle stockée ?
+**Réponse :**
+`HKLM\SOFTWARE\Microsoft\Network\debug`
+<img width="1024" height="494" alt="image" src="https://github.com/user-attachments/assets/d69ef1a5-1f35-42b6-a46c-b6feb12e88d0" />
+
+
+**Question 5 :** Quel code PowerShell a été utilisé pour lancer la charge utile ?
+**Réponse :**
+
+```powershell
+"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -c "$x=$((gp HKLM:Software\Microsoft\Network debug).debug);start -Win Hidden -A \"-enc $x\" powershell";exit;
+```
+<img width="1011" height="521" alt="image" src="https://github.com/user-attachments/assets/c4d747af-3445-40b4-8e36-65cc096a28d5" />
+
+
+---
+
+## 🧠 Enquête 3.2 — Tâche planifiée suspecte
+
+**Fichier :** `Investigation-3.2.evtx`
+
+**Question 1 :** Quelle est la propriété intellectuelle (adresse IP de l’adversaire) ?
+**Réponse :**
+`172.168.103.188`
+
+**Question 2 :** Quel est le chemin complet de l’emplacement de la charge utile ?
+**Réponse :**
+`c:\users\q\AppData:blah.txt`
+<img width="1038" height="529" alt="image" src="https://github.com/user-attachments/assets/1c6b834b-fec6-446c-8a91-82519ea4897e" />
+
+**Question 3 :** Quelle a été la commande complète utilisée pour créer la tâche planifiée ?
+**Réponse :**
+
+```bash
+"C:\WINDOWS\system32\schtasks.exe" /Create /F /SC DAILY /ST 09:00 /TN Updater /TR "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NonI -W hidden -c \"IEX ([Text.Encoding]::UNICODE.GetString([Convert]::FromBase64String($(cmd /c ''more < c:\users\q\AppData:blah.txt'''))))\""
+```
+<img width="1133" height="426" alt="image" src="https://github.com/user-attachments/assets/db433f62-d956-4acf-9c89-8d163915dbb8" />
+
+**Question 4 :** À quel processus les schtasks.exe suspects ont-ils accédé ?
+💡 L’événement 10 (ProcessAccess) est utilisé pour surveiller quand un processus tente d’accéder à un autre processus sur le système.
+
+Cet événement indique qu’un programme a demandé un accès mémoire ou une interaction directe avec un autre processus (par exemple, lecture, écriture ou injection de code).
+
+Les champs importants incluent :
+
+SourceImage → le processus qui fait l’accès ;
+
+TargetImage → le processus ciblé (souvent sensible comme lsass.exe ou explorer.exe) ;
+
+GrantedAccess → le type d’accès obtenu.
+
+🔍 Cet événement est crucial pour détecter les tentatives de vol de mots de passe ou d’injection de code, notamment lors d’attaques visant lsass.exe, typiques des dump de crédentiels.
+
+**Réponse :**
+`lsass.exe`
+
+<img width="865" height="456" alt="image" src="https://github.com/user-attachments/assets/5696878d-147f-4c3e-8292-7d1f5af1bc55" />
+
+
+---
+
+## 🌐 Enquête 4 — Maman, regarde ! J’ai créé un botnet !
+
+**Fichier :** `Investigation-4.evtx`
+
+**Question 1 :** Quelle est l’adresse IP de l’adversaire ?
+**Réponse :**
+`172.30.1.253`
+
+**Question 2 :** Sur quel port l’adversaire opère-t-il ?
+**Réponse :**
+`80`
+
+**Question 3 :** Quel C2 l’adversaire utilise-t-il ?
+**Réponse :**
+`Empire`
+<img width="1215" height="507" alt="image" src="https://github.com/user-attachments/assets/661908d0-124b-4bf3-b12a-a46eab6e9774" />
+
+
+
+simo harold  steve
+
+
+
+
