@@ -686,6 +686,10 @@ Pour identifier la clé de registre, il faut examiner l’événement 13 – “
 **Question 1 :** Quelle est la clé de registre complète du périphérique USB qui appelle svchost.exe ?
 **Réponse :**
 `HKLM\System\CurrentControlSet\Enum\WpdBusEnumRoot\UMB\2&37c186b&0&STORAGE#VOLUME#_??_USBSTOR#DISK&VEN_SANDISK&PROD_U3_CRUZER_MICRO&REV_8.01#4054910EF19005B3&0#\FriendlyName`
+
+<img width="1273" height="102" alt="image" src="https://github.com/user-attachments/assets/be58c09a-19df-4854-84f2-8360ca103bd4" />
+
+
 <img width="1031" height="145" alt="image" src="https://github.com/user-attachments/assets/c9bd8369-d603-42a4-98b8-ae4e93d0a450" />
 
 
@@ -698,6 +702,10 @@ C’est utile pour retracer l’installation d’un périphérique ou d’un pro
 
 **Réponse :**
 `\Device\HarddiskVolume3`
+
+<img width="1257" height="104" alt="image" src="https://github.com/user-attachments/assets/7171b048-3a8d-4f62-bb05-a21e992d2d2f" />
+
+
 <img width="648" height="366" alt="image" src="https://github.com/user-attachments/assets/a645f9e5-8fdb-4208-95a5-a7fb5a30987a" />
 
 **Question 3 :** Quel est le premier exe exécuté par le processus ?
@@ -705,6 +713,10 @@ Pour identifier le premier exécutable lancé par un processus, il faut examiner
 Le champ ParentCommandLine indique le chemin complet de l’exécutable (.exe) qui a été exécuté.
 **Réponse :**
 `rundll32.exe`
+
+<img width="1269" height="99" alt="image" src="https://github.com/user-attachments/assets/1f4d4f75-287d-43ac-bc5e-ec74320ceb64" />
+
+
 <img width="984" height="527" alt="image" src="https://github.com/user-attachments/assets/13ba18f8-2e12-42b6-af6c-c2649c651d22" />
 
 
@@ -720,6 +732,11 @@ Le champ contient le chemin complet du fichier exécuté ou déposé sur le syst
 Ces champs sont essentiels car ils permettent d’identifier l’emplacement exact du fichier malveillant (la charge utile), ce qui aide à retracer son origine et à évaluer son impact sur l’hôte.
 **Réponse :**
 `C:\Users\IEUser\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\S97WTYG7\update.hta`
+
+
+<img width="1273" height="111" alt="image" src="https://github.com/user-attachments/assets/d105d1d0-9599-4eec-b201-a6d1dfe6161f" />
+
+
 <img width="973" height="430" alt="image" src="https://github.com/user-attachments/assets/80860918-1178-4eae-909c-858580b56309" />
 
 
@@ -727,6 +744,10 @@ Ces champs sont essentiels car ils permettent d’identifier l’emplacement exa
 Pour trouver le chemin complet de la charge utile, il faut examiner les événements de type “  ParentCommandLine ” (ID 1) 
 **Réponse :**
 `C:\Users\IEUser\Downloads\update.html`
+
+<img width="1253" height="119" alt="image" src="https://github.com/user-attachments/assets/08f4edf9-a9f4-442c-a29e-7b82b2d4e30d" />
+
+
 <img width="912" height="480" alt="image" src="https://github.com/user-attachments/assets/a2c06244-5d55-45ec-971e-b41a6d193eeb" />
 
 **Question 3 :** Quel binaire signé a exécuté la charge utile ?
@@ -744,13 +765,24 @@ et le protocole utilisé.
 **Réponse :**
 `C:\Windows\System32\mshta.exe`
 
+<img width="1274" height="96" alt="image" src="https://github.com/user-attachments/assets/be4fcd0b-eb1f-4d08-b2a7-f307cb7e6a82" />
+
+
+
 **Question 4 :** Quelle est l’adresse IP de l’adversaire ?
 **Réponse :**
 `10.0.2.18`
 
+<img width="1265" height="111" alt="image" src="https://github.com/user-attachments/assets/30d87590-2365-488a-9510-99c0bf54e8f4" />
+
+
+
 **Question 5 :** Quel port de connexion arrière est utilisé ?
 **Réponse :**
 `4443`
+
+<img width="1267" height="121" alt="image" src="https://github.com/user-attachments/assets/bb8e5cbd-f2a4-4bf2-9c2d-834a9f1e06fb" />
+
 
 <img width="1009" height="580" alt="image" src="https://github.com/user-attachments/assets/68bd8396-ef86-4a0b-9451-7abdd77fece0" />
 
@@ -767,19 +799,35 @@ L’événement 3 (Network connection)
 **Réponse :**
 `172.30.1.253`
 
+
+
 **Question 2 :** Quel est le nom d’hôte du point de terminaison affecté ?
 **Réponse :**
 `DESKTOP-O153T4R`
 
+<img width="1281" height="110" alt="image" src="https://github.com/user-attachments/assets/3c2ab208-a3a3-4711-b274-72ec533fa8aa" />
+
+
 **Question 3 :** Quel est le nom d’hôte du serveur C2 ?
 **Réponse :**
 `empirec2`
+
+<img width="1282" height="101" alt="image" src="https://github.com/user-attachments/assets/fb97181a-b74b-486c-ae66-e144b4d19a59" />
+
+
 <img width="986" height="576" alt="image" src="https://github.com/user-attachments/assets/a0ccb9ae-97cd-4165-b673-a05f67f1cab2" />
+
 
 **Question 4 :** Où dans le registre la charge utile était-elle stockée ?
 **Réponse :**
 `HKLM\SOFTWARE\Microsoft\Network\debug`
+
+<img width="1271" height="114" alt="image" src="https://github.com/user-attachments/assets/a9d62b7b-93e8-4319-88c7-676c33d14da7" />
+
+
 <img width="1024" height="494" alt="image" src="https://github.com/user-attachments/assets/d69ef1a5-1f35-42b6-a46c-b6feb12e88d0" />
+
+
 
 
 **Question 5 :** Quel code PowerShell a été utilisé pour lancer la charge utile ?
@@ -788,7 +836,12 @@ L’événement 3 (Network connection)
 ```powershell
 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -c "$x=$((gp HKLM:Software\Microsoft\Network debug).debug);start -Win Hidden -A \"-enc $x\" powershell";exit;
 ```
+
+<img width="1274" height="115" alt="image" src="https://github.com/user-attachments/assets/b346babf-c0a4-4da7-8e19-fc14c53c8bee" />
+
+
 <img width="1011" height="521" alt="image" src="https://github.com/user-attachments/assets/c4d747af-3445-40b4-8e36-65cc096a28d5" />
+
 
 
 ---
@@ -801,10 +854,17 @@ L’événement 3 (Network connection)
 **Réponse :**
 `172.168.103.188`
 
+<img width="1270" height="109" alt="image" src="https://github.com/user-attachments/assets/4e468dab-0e47-4221-a03e-6efc74d6bba9" />
+
+
 **Question 2 :** Quel est le chemin complet de l’emplacement de la charge utile ?
 **Réponse :**
 `c:\users\q\AppData:blah.txt`
+
 <img width="1038" height="529" alt="image" src="https://github.com/user-attachments/assets/1c6b834b-fec6-446c-8a91-82519ea4897e" />
+
+<img width="1262" height="106" alt="image" src="https://github.com/user-attachments/assets/2f93d2e6-9cc6-465f-927a-ba8cf1ae2169" />
+
 
 **Question 3 :** Quelle a été la commande complète utilisée pour créer la tâche planifiée ?
 **Réponse :**
@@ -812,6 +872,10 @@ L’événement 3 (Network connection)
 ```bash
 "C:\WINDOWS\system32\schtasks.exe" /Create /F /SC DAILY /ST 09:00 /TN Updater /TR "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NonI -W hidden -c \"IEX ([Text.Encoding]::UNICODE.GetString([Convert]::FromBase64String($(cmd /c ''more < c:\users\q\AppData:blah.txt'''))))\""
 ```
+
+<img width="1266" height="105" alt="image" src="https://github.com/user-attachments/assets/9e8604a3-7cae-4e9b-a828-e22c51f2e90e" />
+
+
 <img width="1133" height="426" alt="image" src="https://github.com/user-attachments/assets/db433f62-d956-4acf-9c89-8d163915dbb8" />
 
 **Question 4 :** À quel processus les schtasks.exe suspects ont-ils accédé ?
@@ -832,6 +896,9 @@ GrantedAccess → le type d’accès obtenu.
 **Réponse :**
 `lsass.exe`
 
+<img width="1266" height="116" alt="image" src="https://github.com/user-attachments/assets/66b5663c-6dd7-461a-bbdc-930a13e11179" />
+
+
 <img width="865" height="456" alt="image" src="https://github.com/user-attachments/assets/5696878d-147f-4c3e-8292-7d1f5af1bc55" />
 
 
@@ -845,13 +912,23 @@ GrantedAccess → le type d’accès obtenu.
 **Réponse :**
 `172.30.1.253`
 
+<img width="1256" height="110" alt="image" src="https://github.com/user-attachments/assets/a2e6a196-00ce-446d-89ef-9eab881bca20" />
+
+
 **Question 2 :** Sur quel port l’adversaire opère-t-il ?
 **Réponse :**
 `80`
 
+<img width="1271" height="110" alt="image" src="https://github.com/user-attachments/assets/d56aadcb-7c60-4fa8-b32b-fa22759b8286" />
+
+
 **Question 3 :** Quel C2 l’adversaire utilise-t-il ?
 **Réponse :**
 `Empire`
+
+<img width="1243" height="111" alt="image" src="https://github.com/user-attachments/assets/c30fcdd1-d631-4f6d-b140-0296e8313499" />
+
+
 <img width="1215" height="507" alt="image" src="https://github.com/user-attachments/assets/661908d0-124b-4bf3-b12a-a46eab6e9774" />
 
 
